@@ -2,13 +2,11 @@ import { ImageComponent } from "@/components/Image";
 import Colors from "@/constants/Colors";
 import { defaultRadius } from "@/constants/Theme";
 import React from "react";
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Image } from "react-native";
 import { FontAwesome6, Feather } from "@expo/vector-icons";
 import JoinCommunity from "@/app/community/join";
 import Like from "@/app/post/like/like";
-import { Link } from "expo-router";
-
-const userPhotoPlaceholder = require("@/assets/images/userphotoplaceholder.png");
+import { Link, useRouter } from "expo-router";
 
 interface FooterAction {
   text: string;
@@ -46,6 +44,8 @@ export const ListItem: React.FC<ListItemProps> = ({
   id,
   userPhoto,
 }) => {
+  const router = useRouter();
+
   const renderFooterIcon = (el: FooterAction, index: number) => {
     return (
       <TouchableOpacity key={index}>
@@ -84,21 +84,6 @@ export const ListItem: React.FC<ListItemProps> = ({
       )}
 
       <View style={{ flex: 1, justifyContent: "center" }}>
-        {files && files.length > 0 && (
-          <View>
-            {files.map((photo, p) => {
-              if (photo === "") return;
-              return (
-                <View key={p}>
-                  {/* <ImageComponent
-                    imageSrc={{ uri: photo }}
-                    imageStyles={styles.imageItem}
-                  /> */}
-                </View>
-              );
-            })}
-          </View>
-        )}
         <View style={styles.nameContainer}>
           <Text style={[styles.name, nameColor ? { color: nameColor } : {}]}>
             {name}
@@ -107,6 +92,34 @@ export const ListItem: React.FC<ListItemProps> = ({
         <View>
           {description !== "" && description && (
             <Text style={styles.description}>{description}</Text>
+          )}
+          {files && files.length > 0 && (
+            <View style={styles.images}>
+              {files.map((photo, p) => {
+                if (photo === "") return;
+                const modifiedPhoto = photo.replace("http", "https");
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      router.push({
+                        pathname: "/image/preview",
+                        params: { image: modifiedPhoto },
+                      });
+                    }}
+                  >
+                    <View key={p} style={styles.itemImage}>
+                      <Image
+                        source={{
+                          uri: modifiedPhoto,
+                        }}
+                        style={styles.imageItem}
+                        resizeMode={"cover"}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
         </View>
         {footerActions && (
@@ -194,5 +207,27 @@ const styles = StyleSheet.create({
 
   footerActionText: {
     color: Colors.textColor,
+  },
+
+  imageItem: {
+    width: 100,
+    height: 100,
+    borderRadius: defaultRadius.sm,
+  },
+
+  itemImage: {
+    width: 100,
+    height: 100,
+    borderRadius: defaultRadius.sm,
+    backgroundColor: Colors.textColor,
+  },
+
+  images: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 16,
+    flexWrap: "wrap",
+    marginVertical: 16,
   },
 });

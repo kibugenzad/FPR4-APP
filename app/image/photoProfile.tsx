@@ -52,7 +52,7 @@ function PhotoProfile({ image: defaultImage }: PhotoType) {
     },
   ];
 
-  console.log("selectedImage", selectedImage);
+  // console.log("selectedImage", selectedImage);
 
   const handleSaveImage = async (image: string) => {
     const result = await photoUploader(image);

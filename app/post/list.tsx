@@ -11,7 +11,15 @@ import { Post } from "./ListItemType";
 
 const userPhotoPlaceholder = require("@/assets/images/userphotoplaceholder.png");
 
-function List() {
+function PostList({
+  owner,
+  scroll = true,
+  doneRefreshing,
+}: {
+  owner?: string | string[];
+  scroll?: boolean;
+  doneRefreshing?: () => void;
+}) {
   const router = useRouter();
   const [data, setData] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,6 +36,7 @@ function List() {
         params: {
           limit: 10,
           page: 1,
+          owner,
         },
         headers: {
           Authorization: `Bearer ${userLoggedIn?.token}`,
@@ -46,7 +55,10 @@ function List() {
   };
 
   useEffect(() => {
-    fetchData();
+    (async () => {
+      await fetchData();
+      doneRefreshing && doneRefreshing();
+    })();
   }, []);
 
   const handlePress = (item: any) => {
@@ -113,6 +125,7 @@ function List() {
             ListEmptyComponent={<Empty message="No data available" />}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }: { item: Post }) => renderListItem(item)}
+            scrollEnabled={scroll}
           />
         </>
       )}
@@ -126,4 +139,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default List;
+export default PostList;

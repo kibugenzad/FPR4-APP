@@ -81,11 +81,12 @@ function ViewPost() {
                     ? data.owner.firstName + " " + data.owner.lastName
                     : ""
                 }
-                photo={
+                userPhoto={
                   data.file && data.file.length > 0 && data.file[0] !== ""
                     ? { uri: data.file[0] }
                     : userPhotoPlaceholder
                 }
+                files={data.file}
                 description={data.content}
                 id={data._id}
                 footerActions={[

@@ -1,109 +1,100 @@
-import { useEffect, useState } from "react";
-
-import { Button } from "@/components/Common/Button";
 import { ImageComponent } from "@/components/Image";
-import Colors from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
-import * as ImagePicker from "expo-image-picker";
-import { View, Text, StyleSheet, Platform } from "react-native";
-import { getStorage } from "@/util/common";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { heightPercentage, widthPercentage } from "@/util/common";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import Colors from "@/constants/Colors";
 import * as FileSystem from "expo-file-system";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
+import { useToast } from "react-native-toast-notifications";
 
-const userImagePlaceholder = require("@/assets/images/userphotoplaceholder.png");
+const menus = [{ label: "Download", value: "download" }];
 
-const imgDir = FileSystem.documentDirectory + "/fprImages";
+export default function preview() {
+  const { image } = useLocalSearchParams();
+  const toast = useToast();
 
-const ensureDirExists = async () => {
-  const dirInfo = await FileSystem.getInfoAsync(imgDir);
+  const handleMenuSelection = (item: any) => {
+    console.log(item);
+    if (item.value === "download") {
+      downloadFile(image);
+    }
+  };
 
-  if (!dirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(imgDir, { intermediates: true });
-  }
-};
+  const downloadFile = async (url: string) => {
+    const filename = url.split("/").pop(); // Extract filename from URL
+    console.log(`Downloading ${filename}`);
+    if (!filename) return;
+    const fileUri = FileSystem.cacheDirectory + filename; // File path to save the image
 
-export default function profile() {
-  const [image, setImage] = useState(null);
-  const [userLoggedIn, setUserInfo] = useState({});
-
-  useEffect(() => {
-    (async () => {
-      const user = await getStorage();
-
-      setUserInfo(user);
-    })();
-  });
-
-  const selectImage = async (useLibrary?: boolean) => {
     try {
-      // No permissions request is necessary for launching the image library
-      let result;
-
-      if (useLibrary) {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.All,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.75,
-        });
-      } else {
-        await ImagePicker.requestCameraPermissionsAsync();
-
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.All,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.75,
-        });
-      }
-
-      console.log(result);
-
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-      }
+      const downloadObject = FileSystem.createDownloadResumable(url, fileUri);
+      const { uri } = await downloadObject.downloadAsync();
+      toast.show("Image downloaded to:" + uri);
     } catch (error) {
-      console.log(error);
+      toast.show("Error downloading image:" + JSON.stringify(error));
     }
   };
 
   return (
-    <View style={[defaultStyles.container, styles.container]}>
-      <View style={styles.profileImageContainer}>
-        {image && (
-          <ImageComponent
-            imageSrc={{ uri: image }}
-            imageStyles={styles.profileImage}
-            alt={userLoggedIn && userLoggedIn?.firstName}
-          />
-        )}
+    <>
+      <Stack.Screen
+        options={{
+          headerRight: () => {
+            return (
+              <>
+                <Menu>
+                  <MenuTrigger>
+                    <Feather
+                      name="more-vertical"
+                      style={defaultStyles.iconClose}
+                      color={Colors.textColor}
+                    />
+                  </MenuTrigger>
+                  <MenuOptions>
+                    {menus.map((item, index) => {
+                      return (
+                        <MenuOption
+                          key={index}
+                          onSelect={() => handleMenuSelection(item)}
+                          text={item.label}
+                        />
+                      );
+                    })}
+                  </MenuOptions>
+                </Menu>
+              </>
+            );
+          },
+        }}
+      />
+      <View style={[defaultStyles.container, styles.container]}>
+        <ImageComponent
+          imageSrc={
+            image.includes("http") || image.includes("https")
+              ? { uri: image }
+              : image
+          }
+          imageStyles={styles.image}
+        />
       </View>
-      <Button
-        text="Pick from library"
-        backgroundColor={Colors.primaryColor}
-        onPress={() => selectImage()}
-      />
-      <Button
-        text="Capture Photo"
-        backgroundColor={Colors.primaryColor}
-        onPress={() => selectImage(true)}
-      />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: Platform.OS === "ios" ? 20 : 0,
-  },
-  profileImageContainer: {
-    flex: 1,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.light,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+  },
+  image: {
+    width: widthPercentage(100),
+    height: heightPercentage(100),
   },
 });

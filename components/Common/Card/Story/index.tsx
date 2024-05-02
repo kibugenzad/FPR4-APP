@@ -26,7 +26,9 @@ export default function Story({
       <TouchableOpacity
         style={[
           defaultStyles.storyListItem,
-          { backgroundColor: addLightToColor(color || Colors.bgColor, 30) },
+          {
+            backgroundColor: addLightToColor(color || Colors.bgColor, 30),
+          },
         ]}
         onPress={onPress}
       >
@@ -94,8 +96,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.2)",
-    borderBottomRightRadius: defaultRadius.sm,
-    borderBottomLeftRadius: defaultRadius.sm,
+    borderRadius: defaultRadius.sm,
     padding: 8,
     zIndex: 10000,
   },

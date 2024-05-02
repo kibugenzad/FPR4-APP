@@ -11,7 +11,7 @@ import Search from "@/components/Search";
 import Colors from "@/constants/Colors";
 import { useToast } from "react-native-toast-notifications";
 
-const userPhotoPlaceholder = require("@/assets/images/userphotoplaceholder.png");
+const userPhotoPlaceholder = require("@/assets/images/group.png");
 
 interface ListItemProps {
   _id: string;
@@ -94,11 +94,12 @@ function List() {
   };
 
   const renderListItem = (item: ListItemProps) => {
+    console.log("file: " + item.file);
     return (
       <TouchableOpacity onPress={() => handlePress(item)}>
         <ListItem
           name={item.name}
-          photo={item.file ? { uri: item.file } : userPhotoPlaceholder}
+          userPhoto={item.file ? { uri: item.file } : userPhotoPlaceholder}
           icon={item.icon}
           iconBackground={item.iconBackground}
           nameColor={item.nameColor}

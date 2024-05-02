@@ -13,10 +13,7 @@ import nextScreenBasedAuth from "@/util/handler/nextScreenBasedAuth";
 import { StatusBar } from "expo-status-bar";
 import { getStorage } from "@/util/common";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const queryClient = new QueryClient();
+import { MenuProvider } from "react-native-popup-menu";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -81,16 +78,16 @@ export default function RootLayout() {
 
   return (
     <>
-      <View style={{ height: 20 }}>
-        <StatusBar style="light" backgroundColor={Colors.bgColor} />
-      </View>
-      <SafeAreaProvider style={{ backgroundColor: Colors.bgColor }}>
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <RootLayoutNav />
-          </ToastProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
+      <StatusBar style="light" backgroundColor={Colors.bgColor} />
+      {/* <SafeAreaProvider
+        style={{ backgroundColor: Colors.bgColor, paddingTop: 50 }}
+      > */}
+      <ToastProvider>
+        <MenuProvider>
+          <RootLayoutNav />
+        </MenuProvider>
+      </ToastProvider>
+      {/* </SafeAreaProvider> */}
     </>
   );
 }
@@ -552,6 +549,30 @@ function RootLayoutNav() {
             color: Colors.textColor,
           },
           title: "Edit Profile",
+          headerLeft: () => {
+            return (
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons
+                  name="close"
+                  style={styles.iconClose}
+                  color={Colors.textColor}
+                />
+              </TouchableOpacity>
+            );
+          },
+        }}
+      />
+
+      <Stack.Screen
+        name="image/preview"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.bgColor,
+          },
+          headerTitleStyle: {
+            color: Colors.textColor,
+          },
+          title: "",
           headerLeft: () => {
             return (
               <TouchableOpacity onPress={() => router.back()}>

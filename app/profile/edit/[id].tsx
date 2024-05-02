@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import Yup from "yup";
 import { useFormik } from "formik";
 
-import { setStorage, widthPercentage } from "@/util/common";
+import { getStorage, setStorage, widthPercentage } from "@/util/common";
 import Colors from "@/constants/Colors";
 import { defaultRadius } from "@/constants/Theme";
 import { Input } from "@/components/Common/TextInput";
@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/Common/Button";
 import axios from "axios";
 import { useToast } from "react-native-toast-notifications";
+import Countries from "@/constants/Countries";
 
 interface RegisterType {
   firstName: string;
@@ -26,6 +27,8 @@ export default function Page() {
   const toast = useToast();
   const { countryDialCode = "+250" } = useLocalSearchParams();
 
+  const [dialCode, setDialCode] = useState(countryDialCode);
+
   const [validationSchema, setValidationSchema] = useState<Yup.ObjectSchema<
     any,
     any,
@@ -38,6 +41,72 @@ export default function Page() {
       return setValidationSchema(module.default);
     });
   }, []);
+
+  useEffect(() => {
+    setDialCode(countryDialCode);
+  }, [countryDialCode]);
+
+  useEffect(() => {
+    async function getUserInfo() {
+      const userInfo = await getStorage();
+
+      setFieldValue("firstName", userInfo.firstName);
+      setFieldValue("lastName", userInfo.lastName);
+      setFieldValue("email", userInfo.email);
+
+      const phoneNumber = userInfo.phoneNumber;
+
+      if (phoneNumber) {
+        const phone = splitPhone("+" + userInfo.phoneNumber);
+
+        setDialCode(phone?.countryCode || "");
+        setFieldValue("phoneNumber", phone?.number);
+      }
+    }
+
+    getUserInfo();
+  }, []);
+
+  const splitPhone = (
+    phoneNumber: string
+  ): { countryCode: string; number: string } | undefined => {
+    try {
+      // Find the country based on the dial code
+      const country = Countries.find((country) =>
+        phoneNumber.startsWith(country.dial_code)
+      );
+
+      if (country) {
+        // Extract the dial code length
+        const dialCodeLength = country.dial_code.length;
+
+        // Extract the country code
+        const countryCode = phoneNumber.substring(0, dialCodeLength);
+
+        // Extract the phone number without the dial code
+        const phoneNumberWithoutDialCode =
+          phoneNumber.substring(dialCodeLength);
+
+        console.log("Country:", country.name);
+        console.log("Country Code:", countryCode);
+        console.log(
+          "Phone Number without Dial Code:",
+          phoneNumberWithoutDialCode
+        );
+
+        return {
+          countryCode,
+          number: phoneNumberWithoutDialCode,
+        };
+      } else {
+        console.log("Country not found for the given dial code");
+      }
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    }
+  };
 
   const formik = useFormik<RegisterType>({
     initialValues: {
@@ -55,7 +124,7 @@ export default function Page() {
           data: {
             firstName: values.firstName,
             lastName: values.lastName,
-            phoneNumber: countryDialCode + "" + values.phoneNumber,
+            phoneNumber: dialCode + "" + values.phoneNumber,
             email: values.email,
           },
         };
@@ -73,7 +142,12 @@ export default function Page() {
   });
 
   const onSuccess = async (response: any) => {
-    const user = response;
+    let user = await getStorage();
+
+    user.firstName = response.firstName;
+    user.lastName = response.lastName;
+    user.email = response.email;
+    user.phoneNumber = response.phoneNumber;
 
     await setStorage(user);
 
@@ -127,7 +201,7 @@ export default function Page() {
                 onPress={() => router.push("/(modals)/country")}
                 label="Dial code"
                 placeholder="+250"
-                value={countryDialCode}
+                value={dialCode}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -146,19 +220,11 @@ export default function Page() {
           </View>
           <Button
             backgroundColor={Colors.primaryColor}
-            text="Login"
+            text="Update"
             borderRadius={defaultRadius.lg}
             loading={isSubmitting}
             onPress={() => handleSubmit()}
           />
-          <Link href={"/login/"} asChild>
-            <Button
-              backgroundColor="transparent"
-              text="Already have an account? Login"
-              borderRadius={defaultRadius.lg}
-              buttonTextColor={Colors.primaryColor}
-            />
-          </Link>
         </View>
       </View>
     </KeyboardAvoidingView>

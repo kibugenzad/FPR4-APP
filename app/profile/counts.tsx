@@ -14,9 +14,10 @@ import Colors from "@/constants/Colors";
 interface AccountCountProps {
   type: string;
   id: string | string[];
+  isRefreshing?: boolean;
 }
 
-function AccountCount({ type, id }: AccountCountProps) {
+function AccountCount({ type, id, isRefreshing }: AccountCountProps) {
   const router = useRouter();
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,12 @@ function AccountCount({ type, id }: AccountCountProps) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (isRefreshing) {
+      fetchData();
+    }
+  }, [isRefreshing]);
 
   const handlePress = (item: any) => {
     router.navigate(`/account/${type}/${item._id}`);
